@@ -63,10 +63,11 @@ static int engine_init_display(struct engine* engine) {
     EGLConfig config;
     EGLSurface surface;
     EGLContext context;
+	EGLint major, minor;
 
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
-    eglInitialize(display, 0, 0);
+    eglInitialize(display, &major, &minor);
 
     /* Here, the application chooses the configuration it desires. In this
      * sample, we have a very simplified selection process, where we pick
@@ -91,7 +92,7 @@ static int engine_init_display(struct engine* engine) {
 
     eglQuerySurface(display, surface, EGL_WIDTH, &w);
     eglQuerySurface(display, surface, EGL_HEIGHT, &h);
-
+	
     engine->display = display;
     engine->context = context;
     engine->surface = surface;
@@ -108,6 +109,37 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
+static void draw()
+{
+	GLubyte colorArray[] = {
+		255, 0, 0, 0,
+		0, 255, 0, 0,
+		0, 0, 255, 0,
+		0, 255, 255, 0,
+		255, 0, 255, 0,
+		255, 255, 0, 0
+	};
+	
+	GLfloat flayout[] = {   
+	    -0.6, -0.6,
+         0.1, -0.6,
+        -0.2,  0.1,
+         0.3, -0.3,
+         0.2,  0.2,
+        -0.6,  0.5
+	};
+	
+    glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	
+	glLineWidth(10);
+	glPointSize(50);
+	glVertexPointer(2, GL_FLOAT, 0, flayout);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
+	
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
 /**
  * Just the current frame in the display.
  */
@@ -120,8 +152,12 @@ static void engine_draw_frame(struct engine* engine) {
     // Just fill the screen with a color.
     glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
             ((float)engine->state.y)/engine->height, 1);
+	
+	//glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT);
-
+	
+    draw();
+	
     eglSwapBuffers(engine->display, engine->surface);
 }
 

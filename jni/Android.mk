@@ -29,5 +29,4 @@ endif
 
 include $(BUILD_SHARED_LIBRARY)
 
-#include /storage/emulated/0/AppProjects/MyNDKApp/jni/android/native_app_glue/Android.mk
 $(call import-module,android/native_app_glue)
