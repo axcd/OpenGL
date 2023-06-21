@@ -105,11 +105,46 @@ static int engine_init_display(struct engine* engine) {
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
+	glViewport(20, 20, 1000, 2000);
 
     return 0;
 }
 
 static void draw()
+{
+	GLubyte colorArray[] = {
+		255, 0, 0, 0,
+		0, 255, 0, 0,
+		0, 0, 255, 0,
+		0, 255, 255, 0,
+		255, 0, 255, 0,
+		255, 255, 0, 0
+	};
+	
+	GLfloat flayout[] = {   
+	    -0.6, -0.6,
+         0.1, -0.6,
+        -0.2,  0.1,
+         0.3, -0.3,
+         0.2,  0.2,
+        -0.6,  0.5
+	};
+	
+    glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	
+	glLineWidth(10);
+	glPointSize(50);
+	glVertexPointer(2, GL_FLOAT, 0, flayout);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
+	
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+static void drawViewport()
 {
 	GLubyte colorArray[] = {
 		255, 0, 0, 0,
@@ -149,14 +184,14 @@ static void draw()
 static void drawXY()
 {
 	GLfloat flayout[] = {   
-	    -0.99,  0,
-         0.99,  0,
-         0,    -0.99,
+	    -0.97,  0,
+         0.97,  0,
+         0,    -0.97,
          0,     0.9,
-         0.99,  0,
-         0.96, -0.012,
-         0.99,  0,
-         0.96,  0.012,
+         0.97,  0,
+         0.93, -0.01,
+         0.97,  0,
+         0.93,  0.01,
 		 0,     0.9,
 		-0.02,  0.88,
 		 0,      0.9,
@@ -182,7 +217,7 @@ static void engine_draw_frame(struct engine* engine) {
         // No display.
         return;
     }
-
+	
     // Just fill the screen with a color.
     glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
             ((float)engine->state.y)/engine->height, 1);
