@@ -138,6 +138,40 @@ static void draw()
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
 	
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
+/**
+ *  draw XY
+ */
+static void drawXY()
+{
+	GLfloat flayout[] = {   
+	    -0.99,  0,
+         0.99,  0,
+         0,    -0.99,
+         0,     0.9,
+         0.99,  0,
+         0.96, -0.012,
+         0.99,  0,
+         0.96,  0.012,
+		 0,     0.9,
+		-0.02,  0.88,
+		 0,      0.9,
+		 0.02, 0.88
+	};
+	
+    glEnableClientState(GL_VERTEX_ARRAY);
+	
+	glLineWidth(10);
+	glPointSize(50);
+	glVertexPointer(2, GL_FLOAT, 0, flayout);
+	
+	glDrawArrays(GL_LINES, 0, 12);
+	
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 /**
@@ -155,8 +189,9 @@ static void engine_draw_frame(struct engine* engine) {
 	
 	//glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT);
-	
+
     draw();
+	drawXY();
 	
     eglSwapBuffers(engine->display, engine->surface);
 }
