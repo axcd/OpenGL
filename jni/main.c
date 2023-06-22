@@ -110,6 +110,40 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
+static void drawsq()
+{
+	GLubyte colorArray[] = {
+		255, 0, 0, 0,
+		0, 255, 0, 0,
+		0, 0, 255, 0,
+		0, 255, 0, 0,
+		0, 0, 255, 0,
+		0, 255, 255, 0
+	};
+	
+	GLfloat flayout[] = {   
+         0.2,  0.2,
+         0.2,  0.6,
+         0.8,  0.2,
+         0.8,  0.6,
+		 0.2,  0.6,
+         0.8,  0.2
+	};
+	
+    glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+	
+	//glLineWidth(10);
+	glPointSize(50);
+	glVertexPointer(2, GL_FLOAT, 0, flayout);
+	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
+	
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+	
+	glDisableClientState(GL_COLOR_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}
+
 static void draw()
 {
 	GLubyte colorArray[] = {
@@ -126,7 +160,7 @@ static void draw()
          0.1, -0.6,
         -0.2,  0.1,
          0.3, -0.3,
-         0.2,  0.2,
+         0.1,  0.2,
         -0.6,  0.5
 	};
 	
@@ -226,6 +260,7 @@ static void engine_draw_frame(struct engine* engine) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     draw();
+	drawsq();
 	drawXY();
 	
     eglSwapBuffers(engine->display, engine->surface);
