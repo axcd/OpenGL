@@ -194,32 +194,31 @@ void drawTexture(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/container.jpg", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp", &width, &height, &nrChannels, 0);
 	if(data){
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     }else{
-		printf("Failed to load texture");exit(0);
+		exit(0);
 	}
 	stbi_image_free(data);
 	
 	glEnable(GL_TEXTURE_2D); //开启2D纹理贴图功能 
 	
 	//渲染方法
-	static GLfloat vertices[12] = {
-								    -0.5f, -0.5f, -1,
-									0.5f,  -0.5f, -1,
-									-0.5f,  0.5f, -1,
-									0.5f,   0.5f, -1,
+	static GLfloat vertices[] = {
+								    -1.0f*width/1080, -1.0f*height/2400,
+									1.0f*width/1080,  -1.0f*height/2400,
+									-1.0f*width/1080,  1.0f*height/2400,
+									1.0f*width/1080,   1.0f*height/2400,
 								};    
 	
-	const GLshort square[] = {
-						        0,0,      
-								1,0,      
-								0,1,       
-								1,1
+	const GLshort square[] = {  0,1,
+								1,1,
+						  	    0,0,      
+								1,0,
 							};
 	
-	glVertexPointer(3, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
+	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
 	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
 	
 	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
@@ -227,6 +226,7 @@ void drawTexture(){
 	
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
 	
+	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -273,16 +273,15 @@ static void engine_draw_frame(struct engine* engine) {
     }
 	
     // Just fill the screen with a color.
-    glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
-            ((float)engine->state.y)/engine->height, 1);
+    //glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
+            //((float)engine->state.y)/engine->height, 1);
 	
-	//glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT);
 
 	drawTexture();
     //draw();
 	//drawsq();
-	drawXY();
+	//drawXY();
 	
     eglSwapBuffers(engine->display, engine->surface);
 }
