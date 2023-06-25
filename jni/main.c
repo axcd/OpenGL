@@ -10,11 +10,9 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
-static GLint imagewidth;
-static GLint imageheight;
-static GLint pixellength;
-static GLubyte* pixeldata;
-	
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
@@ -45,33 +43,6 @@ struct engine {
     int32_t height;
     struct saved_state state;
 };
-
-static void getimagedata()
-{  
-	//打开文件
-	FILE* pfile=fopen("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp","rb");
- 	if(pfile == 0) exit(0);
-
-	//读取图像大小
-	fseek(pfile,0x0012,SEEK_SET);
-	fread(&imagewidth,sizeof(imagewidth),1,pfile);
-	fread(&imageheight,sizeof(imageheight),1,pfile);
-
-	//计算像素数据长度
- 	pixellength=imagewidth*3;
- 	while(pixellength%4 != 0)pixellength++;
-	pixellength *= imageheight;
-
- 	//读取像素数据
-	pixeldata = (GLubyte*)malloc(pixellength);
-	if(pixeldata == 0) exit(0);
-
-	fseek(pfile,54,SEEK_SET);
-	fread(pixeldata,pixellength,1,pfile);
- 
-	//关闭文件
-	fclose(pfile);
-}
 
 /**
  * Initialize an EGL context for the current display.
@@ -138,8 +109,6 @@ static int engine_init_display(struct engine* engine) {
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
-	glViewport(20, 20, 1000, 2000);
-	getimagedata();
 
     return 0;
 }
@@ -213,8 +182,8 @@ static void draw()
 }
 
 
-void drawViewport(){
-	glEnable(GL_TEXTURE_2D);
+void drawTexture(){
+	
 	unsigned int texture;
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0); // 在绑定纹理之前先激活纹理单元
@@ -223,52 +192,44 @@ void drawViewport(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imagewidth, imageheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixeldata);//将图像数据加载到纹理中   
 	
-	//free(pixeldata);//释放内存
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/container.jpg", &width, &height, &nrChannels, 0);
+	if(data){
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }else{
+		printf("Failed to load texture");exit(0);
+	}
+	stbi_image_free(data);
 	
 	glEnable(GL_TEXTURE_2D); //开启2D纹理贴图功能 
-	//glEnableClientState(GL_TEXTURE_2D);
-
+	
 	//渲染方法
-	static GLfloat spinnySquareVertices[12] = {
-												-1.0f, -1.0f, -1,
-												1.0f,  -1.0f, -1,
-												-1.0f,  1.0f, -1,
-												1.0f,   1.0f, -1
-												};    
-	static GLfloat spinnSquareColor[] = {
-											255,255,0,255,//        
-											0,255,255,255,//        
-											0,0,0,0,//        
-											255,0,255,255//            
-											};
-											
+	static GLfloat vertices[12] = {
+								    -0.5f, -0.5f, -1,
+									0.5f,  -0.5f, -1,
+									-0.5f,  0.5f, -1,
+									0.5f,   0.5f, -1,
+								};    
+	
 	const GLshort square[] = {
 						        0,0,      
 								1,0,      
 								0,1,       
 								1,1
 							};
-								
-	//glClearColor(0.1f, 0.8f, 1.0f, 1.0f); //设置清屏颜色   
-	//glClear(GL_COLOR_BUFFER_BIT);  //清屏\n    
-	//glViewport(0, 0, backingWidth, backingHeight);  //设置视口\n \n   
-	//glLoadIdentity();  //清空当前矩阵,还原默认矩阵  \n    
-	//glOrthof(-1.0f, 1.0f, -1.5f, 1.5f, -1.0f, 1.0f);  //正交模式下可视区域 \n    
-	//glColor4f(1.0, 1.0, 1.0, 1.0);  //绘制的颜色\n    
-	glVertexPointer(3, GL_FLOAT, 0, spinnySquareVertices); //确定使用的顶点坐标数列的位置和尺寸\n    
-	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组\n//    
-	//glColorPointer(4, GL_FLOAT, 0, spinnSquareColor);
-	//glEnableClientState(GL_COLOR_ARRAY);  
-	glTexCoordPointer(2, GL_SHORT, 0, square); //new //纹理坐标.参数含义跟以上的方法大相迳庭\n    
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY); //new\n//    
-	//glShadeModel(GL_FLOAT);    
-	//glRotatef(rotation, 0.0, 0.0, 1.0);//旋转  \n \n    
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像\n    
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_VERTEX_ARRAY);
+	
+	glVertexPointer(3, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
+	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
+	
+	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
+	
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
+	
 	glDisable(GL_TEXTURE_2D);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 /**
@@ -318,11 +279,10 @@ static void engine_draw_frame(struct engine* engine) {
 	//glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT);
 
-	drawViewport();
+	drawTexture();
     //draw();
 	//drawsq();
 	drawXY();
-	//drawViewport();
 	
     eglSwapBuffers(engine->display, engine->surface);
 }

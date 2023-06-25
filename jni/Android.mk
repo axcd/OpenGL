@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CPP_EXTENSION := .c
 LOCAL_MODULE    := native-activity
-LOCAL_SRC_FILES := main.c stb_image.c
+LOCAL_SRC_FILES := main.c
 
 LOCAL_LDLIBS    := -llog -landroid -lEGL -lGLESv1_CM
 
