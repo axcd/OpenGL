@@ -119,18 +119,14 @@ static void drawsq()
 		255, 0, 0, 0,
 		0, 255, 0, 0,
 		0, 0, 255, 0,
-		0, 255, 0, 0,
-		0, 0, 255, 0,
-		0, 255, 255, 0
+		0, 255, 255, 0,
 	};
 	
-	GLfloat flayout[] = {   
-         0.2,  0.2,
-         0.2,  0.6,
+	GLfloat flayout[] = {    
+		 0.2,  0.2,
          0.8,  0.2,
+         0.2,  0.6,
          0.8,  0.6,
-		 0.2,  0.6,
-         0.8,  0.2
 	};
 	
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -141,7 +137,7 @@ static void drawsq()
 	glVertexPointer(2, GL_FLOAT, 0, flayout);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
 	
-	glDrawArrays(GL_TRIANGLE_FAN, 0, 6);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -204,12 +200,17 @@ void drawTexture(){
 	
 	glEnable(GL_TEXTURE_2D); //开启2D纹理贴图功能 
 	
+	GLfloat vx = 1.0f, vy = 1.0f;
+	if(1.0f*1080/2400 < 1.0f*width/height) vy = 1.0f*1080/2400*height/width;
+	else vx = 1.0f*2400/1080*width/height;
+	
+	static GLfloat rotation=0.0;
 	//渲染方法
 	static GLfloat vertices[] = {
-								    -1.0f*width/1080, -1.0f*height/2400,
-									1.0f*width/1080,  -1.0f*height/2400,
-									-1.0f*width/1080,  1.0f*height/2400,
-									1.0f*width/1080,   1.0f*height/2400,
+								   -vx, -vy,
+									vx, -vy,
+									-vx,  vy,
+									vx,   vy,
 								};    
 	
 	const GLshort square[] = {  0,1,
@@ -217,6 +218,9 @@ void drawTexture(){
 						  	    0,0,      
 								1,0,
 							};
+	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
+	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
+	glColor4f(1.0,0.0,1.0,1.0);//绘制的颜色
 	
 	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
 	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
@@ -224,7 +228,9 @@ void drawTexture(){
 	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
 	
+	glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
+	rotation += 0.5;
 	
 	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);
@@ -278,10 +284,10 @@ static void engine_draw_frame(struct engine* engine) {
 	
     glClear(GL_COLOR_BUFFER_BIT);
 
-	drawTexture();
+	//drawXY();
     //draw();
 	//drawsq();
-	//drawXY();
+	drawTexture();
 	
     eglSwapBuffers(engine->display, engine->surface);
 }
