@@ -17,11 +17,6 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-struct image_buffer{
-	void* buffer;
-	int size;
-};
-
 /**
  * Our saved state data.
  */
@@ -121,9 +116,9 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
+//获取Texture2D
 void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels)
 {
-	//<自己代码
 	AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
 	if(asset==NULL){
 		exit(0);
@@ -131,23 +126,16 @@ void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *heig
 	
 	off_t bufferSize = AAsset_getLength(asset);
 	char* buffer=(char *)malloc(bufferSize+1);
-	
 	int numBytesRead = AAsset_read(asset, buffer, bufferSize);
-	AAsset_close(asset);
 	
-	struct image_buffer* imagebuffer = (struct image_buffer*)malloc(sizeof(struct image_buffer));
-	imagebuffer->buffer = buffer;
-	imagebuffer->size = bufferSize;
-	
-	unsigned char* data = stbi_load_from_memory((const stbi_uc*)(imagebuffer->buffer), imagebuffer->size, width, height, nrChannels, 0);
-	
+	unsigned char* data = stbi_load_from_memory((const stbi_uc*)buffer, bufferSize, width, height, nrChannels, 0);
 	if(data){
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, *width, *height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     }else{
-		//exit(0);
+		exit(0);
 	}
-	free(imagebuffer->buffer);
-	free(imagebuffer);
+	
+	AAsset_close(asset);
 	stbi_image_free(data);
 }
 
