@@ -12,9 +12,17 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include "log.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
+
+struct image_buffer* imagebuffer;
+
+struct image_buffer{
+	void* buffer;
+	int size;
+};
 
 /**
  * Our saved state data.
@@ -113,6 +121,31 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
+static image_buffer* getData(struct android_app* state, char* filename)
+{
+	//<自己代码
+	//char* filename = "container.jpg";
+	AAssetManager* mgr = state->activity->assetManager;
+	AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
+	if(asset==NULL){
+		exit(0);
+	}
+	
+	off_t bufferSize = AAsset_getLength(asset);
+	char* buffer=(char *)malloc(bufferSize+1);
+	//size = bufferSize;
+	
+	int numBytesRead = AAsset_read(asset, buffer, bufferSize);
+	AAsset_close(asset);
+	
+	struct image_buffer* imagebuffer = (struct image_buffer* )malloc(sizeof(struct image_buffer));
+	imagebuffer->buffer = buffer;
+	imagebuffer->size = bufferSize;
+	return imagebuffer;
+	//>自己代码
+	
+}
+
 static void drawsq()
 {
 	GLubyte colorArray[] = {
@@ -190,11 +223,13 @@ void drawTexture(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp", &width, &height, &nrChannels, 0);
+	//unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load_from_memory((const stbi_uc*)(imagebuffer->buffer), imagebuffer->size, &width, &height, &nrChannels, 0);
+	
 	if(data){
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     }else{
-		exit(0);
+		//exit(0);
 	}
 	stbi_image_free(data);
 	
@@ -279,8 +314,8 @@ static void engine_draw_frame(struct engine* engine) {
     }
 	
     // Just fill the screen with a color.
-    //glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
-            //((float)engine->state.y)/engine->height, 1);
+    glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
+            ((float)engine->state.y)/engine->height, 1);
 	
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -401,7 +436,8 @@ void android_main(struct android_app* state) {
         // We are starting with a previous saved state; restore from it.
         engine.state = *(struct saved_state*)state->savedState;
     }
-
+	
+	imagebuffer = getData(state, "container.jpg");
     // loop waiting for stuff to do.
 
     while (1) {
@@ -437,6 +473,7 @@ void android_main(struct android_app* state) {
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
+				free(imagebuffer);
                 return;
             }
         }
