@@ -38,8 +38,10 @@ struct saved_state {
  */
 struct engine {
     struct android_app* app;
-
-    ASensorManager* sensorManager;
+	
+	AAssetManager* mgr;//= state->activity->assetManager;
+    
+	ASensorManager* sensorManager;
     const ASensor* accelerometerSensor;
     ASensorEventQueue* sensorEventQueue;
 
@@ -121,11 +123,11 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
-static image_buffer* getData(struct android_app* state, char* filename)
+static image_buffer* getData(AAssetManager* mgr, char* filename)
 {
 	//<自己代码
 	//char* filename = "container.jpg";
-	AAssetManager* mgr = state->activity->assetManager;
+	//AAssetManager* mgr = state->activity->assetManager;
 	AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
 	if(asset==NULL){
 		exit(0);
@@ -211,7 +213,7 @@ static void draw()
 }
 
 
-void drawTexture(){
+void drawTexture(struct engine* engine){
 	
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -223,6 +225,7 @@ void drawTexture(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	int width, height, nrChannels;
+	imagebuffer = getData(engine->mgr, "container.jpg");
 	//unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp", &width, &height, &nrChannels, 0);
 	unsigned char* data = stbi_load_from_memory((const stbi_uc*)(imagebuffer->buffer), imagebuffer->size, &width, &height, &nrChannels, 0);
 	
@@ -322,7 +325,7 @@ static void engine_draw_frame(struct engine* engine) {
 	//drawXY();
     //draw();
 	//drawsq();
-	drawTexture();
+	drawTexture(engine);
 	
     eglSwapBuffers(engine->display, engine->surface);
 }
@@ -425,6 +428,9 @@ void android_main(struct android_app* state) {
     state->onInputEvent = engine_handle_input;
     engine.app = state;
 
+	//此行自己代码
+	engine.mgr = state->activity->assetManager;
+	
     // Prepare to monitor accelerometer
     engine.sensorManager = ASensorManager_getInstance();
     engine.accelerometerSensor = ASensorManager_getDefaultSensor(engine.sensorManager,
@@ -437,7 +443,7 @@ void android_main(struct android_app* state) {
         engine.state = *(struct saved_state*)state->savedState;
     }
 	
-	imagebuffer = getData(state, "container.jpg");
+	//imagebuffer = getData(state, "container.jpg");
     // loop waiting for stuff to do.
 
     while (1) {
@@ -473,7 +479,7 @@ void android_main(struct android_app* state) {
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
-				free(imagebuffer);
+				//free(imagebuffer);
                 return;
             }
         }
