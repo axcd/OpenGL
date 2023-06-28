@@ -17,8 +17,6 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-struct image_buffer* imagebuffer;
-
 struct image_buffer{
 	void* buffer;
 	int size;
@@ -123,11 +121,9 @@ static int engine_init_display(struct engine* engine) {
     return 0;
 }
 
-static image_buffer* getData(AAssetManager* mgr, char* filename)
+void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels)
 {
 	//<自己代码
-	//char* filename = "container.jpg";
-	//AAssetManager* mgr = state->activity->assetManager;
 	AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
 	if(asset==NULL){
 		exit(0);
@@ -135,17 +131,24 @@ static image_buffer* getData(AAssetManager* mgr, char* filename)
 	
 	off_t bufferSize = AAsset_getLength(asset);
 	char* buffer=(char *)malloc(bufferSize+1);
-	//size = bufferSize;
 	
 	int numBytesRead = AAsset_read(asset, buffer, bufferSize);
 	AAsset_close(asset);
 	
-	struct image_buffer* imagebuffer = (struct image_buffer* )malloc(sizeof(struct image_buffer));
+	struct image_buffer* imagebuffer = (struct image_buffer*)malloc(sizeof(struct image_buffer));
 	imagebuffer->buffer = buffer;
 	imagebuffer->size = bufferSize;
-	return imagebuffer;
-	//>自己代码
 	
+	unsigned char* data = stbi_load_from_memory((const stbi_uc*)(imagebuffer->buffer), imagebuffer->size, width, height, nrChannels, 0);
+	
+	if(data){
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, *width, *height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    }else{
+		//exit(0);
+	}
+	free(imagebuffer->buffer);
+	free(imagebuffer);
+	stbi_image_free(data);
 }
 
 static void drawsq()
@@ -224,21 +227,11 @@ void drawTexture(struct engine* engine){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
-	int width, height, nrChannels;
-	imagebuffer = getData(engine->mgr, "container.jpg");
-	//unsigned char* data = stbi_load("/storage/emulated/0/AppProjects/opengl/assets/hello.bmp", &width, &height, &nrChannels, 0);
-	unsigned char* data = stbi_load_from_memory((const stbi_uc*)(imagebuffer->buffer), imagebuffer->size, &width, &height, &nrChannels, 0);
-	
-	if(data){
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    }else{
-		//exit(0);
-	}
-	stbi_image_free(data);
-	
 	glEnable(GL_TEXTURE_2D); //开启2D纹理贴图功能 
 	
 	GLfloat vx = 1.0f, vy = 1.0f;
+	int width, height, nrChannels;
+	getImageTexture2D(engine->mgr, "container.jpg", &width, &height, &nrChannels);
 	if(1.0f*1080/2400 < 1.0f*width/height) vy = 1.0f*1080/2400*height/width;
 	else vx = 1.0f*2400/1080*width/height;
 	
@@ -479,7 +472,6 @@ void android_main(struct android_app* state) {
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
-				//free(imagebuffer);
                 return;
             }
         }
