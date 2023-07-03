@@ -1,3 +1,6 @@
+#ifndef LOG_H
+#define LOG_H
+
 #include <stdio.h>
 #include <time.h>
 
@@ -23,3 +26,5 @@ void clean_log()
     fclose( fp );
     return ;
  }
+ 
+ #endif LOG_H
