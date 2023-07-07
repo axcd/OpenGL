@@ -32,7 +32,7 @@ struct saved_state {
 struct engine {
     struct android_app* app;
 	
-	AAssetManager* mgr;
+	AAssetManager* mgr;   //自己加入代码
     
 	ASensorManager* sensorManager;
     const ASensor* accelerometerSensor;
@@ -112,7 +112,7 @@ static int engine_init_display(struct engine* engine) {
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
-	glScalef(0.4, 0.7, 1);
+	glScalef(1, 2, 1);
 
     return 0;
 }
@@ -135,7 +135,7 @@ static void engine_draw_frame(struct engine* engine) {
 	//drawXY();
     //draw();
 	drawHI();
-	//drawTexture(engine->mgr);
+	//drawTexture(engine->mgr, "container.jpg");
 	
     eglSwapBuffers(engine->display, engine->surface);
 }

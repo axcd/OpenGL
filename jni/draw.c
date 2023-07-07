@@ -12,6 +12,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "log.h"
+#include "text.c"
 
 //获取Texture2D
 void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels)
@@ -49,37 +50,18 @@ static void drawHI()
 		0, 255, 255, 0,
 	};
 	
-	GLfloat flayout[] = { 
-		-0.5+fv, -0.5,
-		-0.5+fv, -0.25,
-		-0.5+fv,  0,
-		-0.5+fv,  0.25,
-		-0.5+fv,  0.5,
-		-0.25+fv,     0,
-		  0+fv,     0,
-		 0.25+fv,     0,
-		 0.5+fv,  -0.5,
-		 0.5+fv,  -0.25,
-		 0.5+fv,  0,
-		 0.5+fv,  0.25,
-		 0.5+fv,  0.5,
-		 
-		 1.2+fv,  0.5,
-		// 0.7+fv,  -0.25,
-		 1.2+fv,  0,
-		 1.2+fv,  -0.25,
-		 1.2+fv,  -0.5,
-	};
+	GLfloat flayout[200] ;
 	
+	int size = getf((float*)flayout, 0.01, 0.02);
     glEnableClientState(GL_VERTEX_ARRAY);
 	//glEnableClientState(GL_COLOR_ARRAY);
 	glColor4f(1.0,0.0,0.0,1.0);
 	glLineWidth(10);
-	glPointSize(100);
+	glPointSize(10);
 	glVertexPointer(2, GL_FLOAT, 0, flayout);
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
 	
-	glDrawArrays(GL_POINTS, 0, 17);
+	glDrawArrays(GL_POINTS, 0, size);
 	
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
@@ -120,7 +102,7 @@ static void draw()
 }
 
 
-void drawTexture(AAssetManager* mgr){
+void drawTexture(AAssetManager* mgr, char* filename){
 	
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -135,7 +117,7 @@ void drawTexture(AAssetManager* mgr){
 	
 	GLfloat vx = 1.0f, vy = 1.0f;
 	int width, height, nrChannels;
-	getImageTexture2D(mgr, "container.jpg", &width, &height, &nrChannels);
+	getImageTexture2D(mgr, filename, &width, &height, &nrChannels);
 	
 	if(1.0f*1080/2400 < 1.0f*width/height) vy = 1.0f*1080/2400*height/width;
 	else vx = 1.0f*2400/1080*width/height;
