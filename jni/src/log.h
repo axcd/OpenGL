@@ -19,6 +19,24 @@ int mlog( const char* info,int code, void* pin )
    return 0;
 }
 
+int mlogI(int code)
+{
+   FILE * fp;
+   fp = fopen ( logfile, "a+" );
+   fprintf( fp, "{%d}", code);
+   fclose( fp ); 
+   return 0;
+}
+
+int mlogS(char* str)
+{
+   FILE * fp;
+   fp = fopen ( logfile, "a+" );
+   fprintf( fp, "%s ", str);
+   fclose( fp ); 
+   return 0;
+}
+
 void clean_log()
  {
     FILE *fp;

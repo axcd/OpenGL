@@ -139,7 +139,7 @@ static void engine_draw_frame(struct engine* engine) {
     if(flag==2)
 		draw();
 	if(flag==3)
-		drawA();
+		drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
 	if(flag==4)
 		drawTexture(engine->mgr, "container.jpg");
 	

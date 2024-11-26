@@ -22,8 +22,8 @@
 /**
  *  draw XY
  */
-static void drawXY()
-{
+static void drawXY(){
+	
 	static GLfloat rotation=0.0;
 	GLfloat flayout[] = {   
 	    -0.97,  0,
@@ -69,8 +69,8 @@ static void drawXY()
 }
 
 //绘制三角形
-static void draw()
-{
+static void draw(){
+	
 	static GLfloat rotation=0.0;
 	GLubyte colorArray[] = {
 		255, 0, 0, 0,
@@ -108,7 +108,7 @@ static void draw()
 }
 
 //draw A
-int drawA(){
+int drawA(float r, float g, float b){
 	
 	FT_Library  ft;
 	char ch = 'A';
@@ -128,17 +128,17 @@ int drawA(){
 	
 	//FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-	FT_Set_Pixel_Sizes(face, 0, 2000); 
+	FT_Set_Pixel_Sizes(face, 500, 500); 
 	
 	// 字节对齐
-    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
 	if (FT_Load_Char(face, index, FT_LOAD_RENDER)){
 		printf("ERROR::FREETYTPE: Failed to load Glyph");  
 		return -1;
 	}
     
-	
+	//加载bitmap
 	FT_Load_Glyph(face, index, FT_LOAD_DEFAULT);
 	FT_Glyph glyph;
 	FT_Get_Glyph(face->glyph, &glyph);
@@ -148,12 +148,25 @@ int drawA(){
     //This reference will make accessing the bitmap easier
     FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-	for(int i = 0; i < bitmap.rows; i++){
-		for(int j = 0; j < bitmap.width; j++){
-			if(bitmap.buffer[i * bitmap.width + j]==0x0){
-				bitmap.buffer[i * bitmap.width + j] = 0xFF;
-			}else{
-				bitmap.buffer[i * bitmap.width + j] = 0x0;
+	static unsigned char* bitmapBuffer = NULL;
+	
+	if(bitmapBuffer == NULL){
+		
+		bitmapBuffer = (unsigned char*)calloc(bitmap.rows,bitmap.width*4);	
+		for(int i = 0; i < bitmap.rows; i++){
+			for(int j = 0; j < bitmap.width; j++){
+				if(bitmap.buffer[i*bitmap.width+j] == 0){	
+					bitmapBuffer[4*(i*bitmap.width+j)] = r*255;      // red
+					bitmapBuffer[4*(i*bitmap.width+j)+1] = g*225;    // green
+					bitmapBuffer[4*(i*bitmap.width+j)+2] = b*255;    // blue
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 0;    //alpha
+			
+				}else{		
+					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
+					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
+					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 0;
+				}
 			}
 		}
 	}
@@ -162,7 +175,8 @@ int drawA(){
 			
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
 	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
-	glColor4f(1.0, 0.0, 0.0, 1.0);
+	glColor4f(r, g, b, 1.0);
+	//glColor4f(1.0, 0.0, 0.0, 1.0);
 	
 	GLuint texture;
     glGenTextures(1, &texture);
@@ -178,13 +192,13 @@ int drawA(){
     glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
-                GL_LUMINANCE,
+                GL_RGBA,
                 bitmap.width,
                 bitmap.rows,
                 0,
-                GL_LUMINANCE,
+				GL_RGBA,  
                 GL_UNSIGNED_BYTE,
-                bitmap.buffer
+                bitmapBuffer
     );
 
 	GLfloat vx = 0.5f, vy = 0.5f;
@@ -193,13 +207,13 @@ int drawA(){
 									vx, -vy,
 									-vx,  vy,
 									vx,   vy,
-								};    
+								 };    
   
-	const GLshort square[] = {  0,1,
-								1,1,
+	const GLshort square[] = { 0,1,
+							   1,1,
 						  	    0,0,      
-								1,0,
-							};
+								1,0, 
+								};
 		
 	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
 	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
@@ -216,14 +230,15 @@ int drawA(){
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	
+	//free(bitmapBuffer);
+	//bitmapBuffer=NULL;
 	FT_Done_Face(face);
 	FT_Done_FreeType(ft);
 	return 0;
 }
 
 //获取Texture2D
-void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels)
-{
+void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels){
 	AAsset* asset = AAssetManager_open(mgr, filename, AASSET_MODE_UNKNOWN);
 	if(asset==NULL){
 		exit(0);
@@ -281,6 +296,7 @@ void drawTexture(AAssetManager* mgr, char* filename){
 							};
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
 	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
+	glColor4f(1.0, 1.0, 1.0, 1.0);
 	
 	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
 	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
