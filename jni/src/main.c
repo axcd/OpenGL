@@ -12,42 +12,12 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "draw.c"
-#include "log.h"
+//#include "log.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
 int flag = 1;
-
-/**
- * Our saved state data.
- */
-struct saved_state {
-    float angle;
-    int32_t x;
-    int32_t y;
-};
-
-/**
- * Shared state for our app.
- */
-struct engine {
-    struct android_app* app;
-	
-	AAssetManager* mgr;   //自己加入代码
-    
-	ASensorManager* sensorManager;
-    const ASensor* accelerometerSensor;
-    ASensorEventQueue* sensorEventQueue;
-
-    int animating;
-    EGLDisplay display;
-    EGLSurface surface;
-    EGLContext context;
-    int32_t width;
-    int32_t height;
-    struct saved_state state;
-};
 
 /**
  * Initialize an EGL context for the current display.
@@ -115,7 +85,7 @@ static int engine_init_display(struct engine* engine) {
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
 	glScalef(1, 2, 1);
-
+	
     return 0;
 }
 
@@ -140,9 +110,10 @@ static void engine_draw_frame(struct engine* engine) {
 		draw();
 	if(flag==3)
 		drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
+	//	drawB(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height, engine->aassetManager);
 	if(flag==4)
-		drawTexture(engine->mgr, "container.jpg");
-	
+		drawTexture(engine->aassetManager, "container.jpg");
+
     eglSwapBuffers(engine->display, engine->surface);
 }
 
@@ -239,7 +210,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 void android_main(struct android_app* state) {
     struct engine engine;
 	
-    clean_log();
+   // clean_log();
 
     // Make sure glue isn't stripped.
     app_dummy();
@@ -251,7 +222,7 @@ void android_main(struct android_app* state) {
     engine.app = state;
 
 	//此行自己代码
-	engine.mgr = state->activity->assetManager;
+	engine.aassetManager = state->activity->assetManager;
 	
     // Prepare to monitor accelerometer
     engine.sensorManager = ASensorManager_getInstance();

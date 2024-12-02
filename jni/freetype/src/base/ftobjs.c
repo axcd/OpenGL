@@ -14,7 +14,7 @@
 /*  understand and accept it fully.                                        */
 /*                                                                         */
 /***************************************************************************/
-
+#include "log.h"
 
 #include <ft2build.h>
 #include FT_LIST_H
@@ -46,7 +46,6 @@
 #ifdef FT_CONFIG_OPTION_MAC_FONTS
 #include "ftbase.h"
 #endif
-
 
 #ifdef FT_DEBUG_LEVEL_TRACE
 
@@ -1410,7 +1409,6 @@
   {
     FT_Open_Args  args;
 
-
     /* test for valid `library' and `aface' delayed to `FT_Open_Face' */
     if ( !pathname )
       return FT_THROW( Invalid_Argument );
@@ -2339,11 +2337,10 @@
     FT_Bool      external_stream;
     FT_Module*   cur;
     FT_Module*   limit;
-
+mlog("ftobjs.c", 1, NULL);
 #ifndef FT_CONFIG_OPTION_MAC_FONTS
     FT_UNUSED( test_mac_fonts );
 #endif
-
 
 #ifdef FT_DEBUG_LEVEL_TRACE
     FT_TRACE3(( "FT_Open_Face: " ));
@@ -2359,9 +2356,8 @@
 #endif
 
     /* test for valid `library' delayed to `FT_Stream_New' */
-
-    if ( ( !aface && face_index >= 0 ) || !args )
-      return FT_THROW( Invalid_Argument );
+	if ( ( !aface && face_index >= 0 ) || !args )
+		return FT_THROW( Invalid_Argument );
 
     external_stream = FT_BOOL( ( args->flags & FT_OPEN_STREAM ) &&
                                args->stream                     );
@@ -3661,7 +3657,6 @@
     goto Exit;
   }
 
-
   /* documentation is in freetype.h */
 
   FT_EXPORT_DEF( FT_UInt )
@@ -3670,10 +3665,10 @@
   {
     FT_UInt  result = 0;
 
-
     if ( face && face->charmap )
     {
       FT_CMap  cmap = FT_CMAP( face->charmap );
+
 
 
       if ( charcode > 0xFFFFFFFFUL )

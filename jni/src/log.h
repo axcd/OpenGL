@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <time.h>
 
-char *logfile = "/storage/emulated/0/AppProjects/clog.txt";
+#define LOG_FILE "/storage/emulated/0/AppProjects/clog.txt"
 
 int mlog( const char* info,int code, void* pin )
 {
@@ -13,7 +13,7 @@ int mlog( const char* info,int code, void* pin )
     strftime(tmp,sizeof(tmp),"%Y-%m-%d %H:%M:%S",localtime(&nowtime));
 
    FILE * fp;
-   fp = fopen ( logfile, "a+" );
+   fp = fopen ( LOG_FILE, "a+" );
    fprintf( fp, "%s  [ %p ]   %d  %s\n", tmp, pin, code, info );
    fclose( fp ); 
    return 0;
@@ -22,7 +22,7 @@ int mlog( const char* info,int code, void* pin )
 int mlogI(int code)
 {
    FILE * fp;
-   fp = fopen ( logfile, "a+" );
+   fp = fopen ( LOG_FILE, "a+" );
    fprintf( fp, "{%d}", code);
    fclose( fp ); 
    return 0;
@@ -31,7 +31,7 @@ int mlogI(int code)
 int mlogS(char* str)
 {
    FILE * fp;
-   fp = fopen ( logfile, "a+" );
+   fp = fopen ( LOG_FILE, "a+" );
    fprintf( fp, "%s ", str);
    fclose( fp ); 
    return 0;
@@ -40,9 +40,11 @@ int mlogS(char* str)
 void clean_log()
  {
     FILE *fp;
-    fp = fopen ( logfile, "w" );
+    fp = fopen ( LOG_FILE, "w" );
     fclose( fp );
     return ;
  }
+ 
+ #undef LOG_FILE
  
  #endif LOG_H

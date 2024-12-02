@@ -20,7 +20,6 @@ LOCAL_CPP_EXTENSION := .c .cpp
 
 LOCAL_MODULE    := native-activity
 
-
 LOCAL_C_INCLUDES := $(LOCAL_PATH)
 
 LOCAL_SRC_FILES := main.c

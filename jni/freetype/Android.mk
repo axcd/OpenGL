@@ -46,9 +46,10 @@ LOCAL_SRC_FILES := \
         ./src/type42/type42.c \
         ./src/winfonts/winfnt.c
 
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include
-LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -Os
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/include \
+					$(LOCAL_PATH)/../src
 
+LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -Os
 
 LOCAL_MODULE:= freetype
 
