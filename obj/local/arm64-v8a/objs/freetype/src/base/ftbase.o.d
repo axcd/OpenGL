@@ -42,7 +42,7 @@ obj/local/arm64-v8a/objs/freetype/./src/base/ftbase.o: \
  jni/freetype/include/freetype/tttags.h \
  jni/freetype/include/freetype/internal/ftstream.h \
  jni/freetype/./src/base/ftbase.h jni/freetype/./src/base/ftobjs.c \
- jni/freetype/../src/log.h jni/freetype/include/freetype/ftlist.h \
+ jni/src/log.h jni/freetype/include/freetype/ftlist.h \
  jni/freetype/include/freetype/ftoutln.h \
  jni/freetype/include/freetype/internal/ftvalid.h \
  jni/freetype/include/freetype/internal/ftrfork.h \
@@ -170,7 +170,7 @@ jni/freetype/./src/base/ftbase.h:
 
 jni/freetype/./src/base/ftobjs.c:
 
-jni/freetype/../src/log.h:
+jni/src/log.h:
 
 jni/freetype/include/freetype/ftlist.h:
 

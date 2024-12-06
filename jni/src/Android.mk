@@ -32,6 +32,8 @@ ifeq ($(TARGET_ARCH_ABI),x86)
     LOCAL_CFLAGS += -ffast-math -mtune=atom -mssse3 -mfpmath=sse
 endif
 
+LOCAL_EXPORT_C_INCLUDES += $(LOCAL_C_INCLUDES)
+
 include $(BUILD_SHARED_LIBRARY)
 
 $(call import-module,android/native_app_glue)

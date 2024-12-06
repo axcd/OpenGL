@@ -17,7 +17,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#include <log.h>
+#include "log.h"
 #include "drawFont.c"
 
 #define SDL_RWOPS_JNIFILE  3U
@@ -158,7 +158,7 @@ clean_log();
 		printf("ERROR::FREETYPE: Could not init FreeType Library");
 		return -1;
 	}
-mlog("draw.c", 1, NULL);
+
 	FT_Face face;
 	
 	char *file = "/storage/emulated/0/AppProjects/gles/assets/fonts/GB2312.ttf";
@@ -287,7 +287,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	char ch = 'A';
 	wchar_t *wch = L"毛";
 
-	asset = AAssetManager_open(asset_manager, "GB2312.ttf", AASSET_MODE_UNKNOWN);
+	asset = AAssetManager_open(asset_manager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
 
 	static FT_Stream stream = NULL;
 	static FT_Open_Args *args = NULL;
@@ -327,16 +327,21 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	}
 	
 	FT_Face face;
-	
+/*
 	if (FT_Open_Face(ft, args, -1, &face)){
+		printf( "ERROR::FREETYPE: Failed to load font");
+		return -1;
+	}
+*/
+	if (FT_Open_Face(ft, args, 0, &face)){
 		printf( "ERROR::FREETYPE: Failed to load font");
 		return -1;
 	}
 
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	FT_UInt index = FT_Get_Char_Index(face, ch);
-	FT_Set_Pixel_Sizes(face, 300, 300); 
-	//FT_Set_Char_Size(face, 0, 16*64, 0, 0);
+	FT_UInt index = FT_Get_Char_Index(face, wch[0]);
+	FT_Set_Pixel_Sizes(face, 500, 500); 
+	//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
 
 	// 字节对齐
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

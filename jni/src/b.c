@@ -70,11 +70,11 @@
 
     /* test for valid `library' delayed to `FT_Stream_New' */
 
-    if ( ( !aface && face_index >= 0 ) || !args )
+    if ( ( !aface && face_index >= 0 ) || !args )      //false
       return FT_THROW( Invalid_Argument );
 
     external_stream = FT_BOOL( ( args->flags & FT_OPEN_STREAM ) &&
-                               args->stream                     );
+                               args->stream                     );   //false
 
     /* create input stream */
     error = FT_Stream_New( library, args, &stream );
@@ -345,3 +345,177 @@
   }
 
   
+  FT_BASE_DEF( FT_Error )
+  FT_Stream_New( FT_Library           library,
+                 const FT_Open_Args*  args,
+                 FT_Stream           *astream )
+  {
+    FT_Error   error;
+    FT_Memory  memory;
+    FT_Stream  stream = NULL;
+
+
+    *astream = NULL;
+
+    if ( !library )
+      return FT_THROW( Invalid_Library_Handle );
+
+    if ( !args )
+      return FT_THROW( Invalid_Argument );
+
+    memory = library->memory;
+
+    if ( FT_NEW( stream ) )
+      goto Exit;
+
+    stream->memory = memory;
+
+    if ( args->flags & FT_OPEN_MEMORY )
+    {
+      /* create a memory-based stream */
+      FT_Stream_OpenMemory( stream,
+                            (const FT_Byte*)args->memory_base,
+                            (FT_ULong)args->memory_size );
+    }
+
+#ifndef FT_CONFIG_OPTION_DISABLE_STREAM_SUPPORT
+
+    else if ( args->flags & FT_OPEN_PATHNAME )
+    {
+      /* create a normal system stream */
+      error = FT_Stream_Open( stream, args->pathname );
+      stream->pathname.pointer = args->pathname;
+    }
+    else if ( ( args->flags & FT_OPEN_STREAM ) && args->stream )
+    {
+      /* use an existing, user-provided stream */
+
+      /* in this case, we do not need to allocate a new stream object */
+      /* since the caller is responsible for closing it himself       */
+      FT_FREE( stream );
+      stream = args->stream;
+    }
+
+#endif
+
+    else
+      error = FT_THROW( Invalid_Argument );
+
+    if ( error )
+      FT_FREE( stream );
+    else
+      stream->memory = memory;  /* just to be certain */
+
+    *astream = stream;
+
+  Exit:
+    return error;
+  }
+
+
+  FT_BASE_DEF( void )
+  FT_Stream_Free( FT_Stream  stream,
+                  FT_Int     external )
+  {
+    if ( stream )
+    {
+      FT_Memory  memory = stream->memory;
+
+
+      FT_Stream_Close( stream );
+
+      if ( !external )
+        FT_FREE( stream );
+    }
+  }
+  
+  /* create a new input stream from an FT_Open_Args structure */
+  /*                                                          */
+  FT_BASE_DEF( FT_Error )
+  FT_Stream_New( FT_Library           library,
+                 const FT_Open_Args*  args,
+                 FT_Stream           *astream )
+  {
+    FT_Error   error;
+    FT_Memory  memory;
+    FT_Stream  stream = NULL;
+
+
+    *astream = NULL;
+
+    if ( !library )
+      return FT_THROW( Invalid_Library_Handle );
+
+    if ( !args )
+      return FT_THROW( Invalid_Argument );
+
+    memory = library->memory;
+
+    if ( FT_NEW( stream ) )
+      goto Exit;
+
+    stream->memory = memory;
+
+    if ( args->flags & FT_OPEN_MEMORY )
+    {
+      /* create a memory-based stream */
+      FT_Stream_OpenMemory( stream,
+                            (const FT_Byte*)args->memory_base,
+                            (FT_ULong)args->memory_size );
+    }
+
+#ifndef FT_CONFIG_OPTION_DISABLE_STREAM_SUPPORT
+
+    else if ( args->flags & FT_OPEN_PATHNAME )
+    {
+      /* create a normal system stream */
+      error = FT_Stream_Open( stream, args->pathname );
+      stream->pathname.pointer = args->pathname;
+    }
+    else if ( ( args->flags & FT_OPEN_STREAM ) && args->stream )
+    {
+      /* use an existing, user-provided stream */
+
+      /* in this case, we do not need to allocate a new stream object */
+      /* since the caller is responsible for closing it himself       */
+      FT_FREE( stream );
+      stream = args->stream;
+    }
+
+	
+FT_NEW( stream ) 
+
+#define FT_ASSIGNP( p, val )  (p) = (val)
+
+#define FT_ASSIGNP_INNER( p, exp )  ( _ft_debug_file   = __FILE__, \
+                                      _ft_debug_lineno = __LINE__, \
+                                      FT_ASSIGNP( p, exp ) )
+
+#define FT_NEW( ptr )  FT_MEM_SET_ERROR( FT_MEM_NEW( ptr ) )
+	
+#define FT_MEM_SET_ERROR( cond )  ( (cond), error != 0 )
+
+#define FT_MEM_NEW( ptr )                        \
+          FT_MEM_ALLOC( ptr, sizeof ( *(ptr) ) )
+		  
+#define FT_MEM_ALLOC( ptr, size )                               \
+          FT_ASSIGNP_INNER( ptr, ft_mem_alloc( memory,          \
+                                               (FT_Long)(size), \
+                                               &error ) )
+
+											   
+											   
+											   
+FT_MEM_SET_ERROR( FT_MEM_NEW( atream ) )
+
+((FT_MEM_NEW( atream )), error != 0 )
+
+((FT_MEM_ALLOC( stream, sizeof ( *(stream) ) )), error != 0 )
+
+((_ft_debug_file   = __FILE__, _ft_debug_lineno = __LINE__, FT_ASSIGNP( stream, ft_mem_alloc( memory, (FT_Long)(sizeof ( *(stream) )), &error ) )), error != 0 )
+
+
+((_ft_debug_file   = __FILE__,
+_ft_debug_lineno = __LINE__,
+(( stream) = (ft_mem_alloc( memory, (FT_Long)(sizeof ( *(stream) ))), &error ) )), 
+error != 0 )

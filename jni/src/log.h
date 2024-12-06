@@ -44,7 +44,5 @@ void clean_log()
     fclose( fp );
     return ;
  }
- 
- #undef LOG_FILE
- 
+
  #endif LOG_H

@@ -46,8 +46,7 @@ LOCAL_SRC_FILES := \
         ./src/type42/type42.c \
         ./src/winfonts/winfnt.c
 
-LOCAL_C_INCLUDES += $(LOCAL_PATH)/include \
-					$(LOCAL_PATH)/../src
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/include 
 
 LOCAL_CFLAGS += -DFT2_BUILD_LIBRARY -Os
 
@@ -57,6 +56,8 @@ LOCAL_COPY_HEADERS_TO := $(common_COPY_HEADERS_TO)
 LOCAL_COPY_HEADERS := $(common_COPY_HEADERS)
 
 LOCAL_EXPORT_C_INCLUDES += $(LOCAL_C_INCLUDES)
+
+LOCAL_SHARED_LIBRARIES := native-activity
 
 include $(BUILD_STATIC_LIBRARY)
 

@@ -12,7 +12,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "draw.c"
-//#include "log.h"
+#include "log.h"
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
@@ -109,8 +109,8 @@ static void engine_draw_frame(struct engine* engine) {
     if(flag==2)
 		draw();
 	if(flag==3)
-		drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
-	//	drawB(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height, engine->aassetManager);
+	//	drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
+		drawB(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height, engine->aassetManager);
 	if(flag==4)
 		drawTexture(engine->aassetManager, "container.jpg");
 
@@ -210,7 +210,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 void android_main(struct android_app* state) {
     struct engine engine;
 	
-   // clean_log();
+    clean_log();
 
     // Make sure glue isn't stripped.
     app_dummy();

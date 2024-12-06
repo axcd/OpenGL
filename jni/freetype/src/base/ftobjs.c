@@ -15,7 +15,6 @@
 /*                                                                         */
 /***************************************************************************/
 #include "log.h"
-
 #include <ft2build.h>
 #include FT_LIST_H
 #include FT_OUTLINE_H
@@ -2337,7 +2336,7 @@
     FT_Bool      external_stream;
     FT_Module*   cur;
     FT_Module*   limit;
-mlog("ftobjs.c", 1, NULL);
+
 #ifndef FT_CONFIG_OPTION_MAC_FONTS
     FT_UNUSED( test_mac_fonts );
 #endif
