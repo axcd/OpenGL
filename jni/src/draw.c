@@ -151,9 +151,7 @@ int drawA(float r, float g, float b){
 	
 	wchar_t *wch = L"A";
 	wch = L"毛";
-	
-clean_log();
-	
+
 	if (FT_Init_FreeType(&ft)){
 		printf("ERROR::FREETYPE: Could not init FreeType Library");
 		return -1;
@@ -284,14 +282,18 @@ clean_log();
 int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	
 	FT_Library  ft;
-	char ch = 'A';
 	wchar_t *wch = L"毛";
-
+	//wch = L"A";
+	static unsigned int rows;
+    static unsigned int width;
+	static unsigned char* bitmapBuffer = NULL;
+	
+	if(bitmapBuffer == NULL){
 	asset = AAssetManager_open(asset_manager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
-
-	static FT_Stream stream = NULL;
-	static FT_Open_Args *args = NULL;
-	static SDL_RWops *rwops = NULL;
+	
+	FT_Stream stream = NULL;
+	FT_Open_Args *args = NULL;
+	SDL_RWops *rwops = NULL;
 
 	if(rwops == NULL)
 		rwops = (SDL_RWops *)malloc(sizeof *rwops);
@@ -301,7 +303,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 		args = (FT_Open_Args *)malloc(sizeof(*args));
 
     memset(stream, 0, sizeof(*stream));
-	memset(args, 0, sizeof(*args));
+	//memset(args, 0, sizeof(*args));
 
 	rwops->hidden.androidio.asset = (void*) asset;
 	rwops->size = Android_JNI_FileSize;
@@ -327,12 +329,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	}
 	
 	FT_Face face;
-/*
-	if (FT_Open_Face(ft, args, -1, &face)){
-		printf( "ERROR::FREETYPE: Failed to load font");
-		return -1;
-	}
-*/
+
 	if (FT_Open_Face(ft, args, 0, &face)){
 		printf( "ERROR::FREETYPE: Failed to load font");
 		return -1;
@@ -361,34 +358,44 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
     //This reference will make accessing the bitmap easier
     FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-	static unsigned char* bitmapBuffer = NULL;
+	rows = bitmap.rows;
+    width = bitmap.width;
 	
-	if(bitmapBuffer == NULL){
+	//if(bitmapBuffer == NULL){
 		//把像素有1个字节变成4个字节
 		bitmapBuffer = (unsigned char*)calloc(bitmap.rows,bitmap.width*4);	
 		for(int i = 0; i < bitmap.rows; i++){
 			for(int j = 0; j < bitmap.width; j++){
 				if(bitmap.buffer[i*bitmap.width+j] == 0){	
 					bitmapBuffer[4*(i*bitmap.width+j)] = 255;      // red
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 225;    // green
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;    // blue
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 0;    //alpha
+					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;    // green
+					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;    // blue
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;    //alpha
 			
 				}else{		
-					bitmapBuffer[4*(i*bitmap.width+j)] = 255;
+					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
 					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
 					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 0;
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
 				}
 			}
 		}
+		
+		free(rwops);
+		rwops = NULL;
+		free(stream);
+		stream = NULL;
+		free(args);
+		args = NULL;
+		FT_Done_Face(face);
+		FT_Done_FreeType(ft);
 	}
 	
 	static GLfloat rotation=0.0;
 			
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
 	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
-	glColor4f(r, g, b, 0.0);
+	//glColor4f(r, g, b, 0.0);
 	//glColor4f(1.0, 0.0, 0.0, 1.0);
 	
 	GLuint texture;
@@ -406,8 +413,8 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
                 GL_TEXTURE_2D,
                 0,
                 GL_RGBA,
-                bitmap.width,
-                bitmap.rows,
+                width,
+                rows,
                 0,
 				GL_RGBA,  
                 GL_UNSIGNED_BYTE,
@@ -445,17 +452,10 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	
 	//free(bitmapBuffer);
 	//bitmapBuffer=NULL;
-
-	free(rwops);
-	rwops = NULL;
-	free(stream);
-	stream = NULL;
-	free(args);
-	args = NULL;
 	
-	AAsset_close(asset);
-	FT_Done_Face(face);
-	FT_Done_FreeType(ft);
+	//AAsset_close(asset);
+	//FT_Done_Face(face);
+	//FT_Done_FreeType(ft);
 	return 0;
 }
 

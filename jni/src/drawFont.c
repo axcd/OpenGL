@@ -1,4 +1,5 @@
 #define SDLCALL
+
 #define RW_SEEK_SET 0       /**< Seek from the beginning of data */
 #define RW_SEEK_CUR 1       /**< Seek relative to current read point */
 #define RW_SEEK_END 2       /**< Seek relative to the end of data */
@@ -119,18 +120,13 @@ Sint64 SDL_RWtell(SDL_RWops *context)
     return context->seek(context, 0, RW_SEEK_CUR);
 }
 
-Sint64
-SDL_RWseek(SDL_RWops *context, Sint64 offset, int whence)
+Sint64 SDL_RWseek(SDL_RWops *context, Sint64 offset, int whence)
 {
     return context->seek(context, offset, whence);
 }
 
-static unsigned long RWread(
-    FT_Stream stream,
-    unsigned long offset,
-    unsigned char *buffer,
-    unsigned long count
-)
+static unsigned long RWread(FT_Stream stream, unsigned long offset, 
+		unsigned char *buffer, unsigned long count)
 {
     SDL_RWops *src;
 
@@ -146,3 +142,26 @@ Sint64 SDL_RWsize(SDL_RWops *context)
 {
     return context->size(context);
 }
+
+/*
+ void* FT_Alloc_Func( FT_Memory memory, long size ){
+	 memory->user = alloc( size );
+ }
+					
+void FT_Free_Func( FT_Memory memory, void* block ){
+	free(memory->user);
+}
+				   
+void* FT_Realloc_Func( FT_Memory memory, long cur_size, long new_size, void* block ){
+	realloc(memory->user, new_size);
+}
+
+unsigned long FT_Stream_IoFunc( FT_Stream stream, unsigned long offset, unsigned char* buffer, unsigned long count ){
+	
+}
+					   
+void FT_Stream_CloseFunc( FT_Stream  stream ){
+	
+}*/
+					  
+					 

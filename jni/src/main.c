@@ -84,6 +84,7 @@ static int engine_init_display(struct engine* engine) {
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glDisable(GL_DEPTH_TEST);
+	glEnable(GL_ALPHA_TEST);
 	glScalef(1, 2, 1);
 	
     return 0;
@@ -109,7 +110,8 @@ static void engine_draw_frame(struct engine* engine) {
     if(flag==2)
 		draw();
 	if(flag==3)
-	//	drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
+		//drawTexture(engine->aassetManager, "container.jpg");
+		//drawA(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height);
 		drawB(((float)engine->state.x)/engine->width, engine->state.angle, ((float)engine->state.y)/engine->height, engine->aassetManager);
 	if(flag==4)
 		drawTexture(engine->aassetManager, "container.jpg");
@@ -214,7 +216,9 @@ void android_main(struct android_app* state) {
 
     // Make sure glue isn't stripped.
     app_dummy();
-
+	
+	//asset = AAssetManager_open(state->activity->assetManager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
+	
     memset(&engine, 0, sizeof(engine));
     state->userData = &engine;
     state->onAppCmd = engine_handle_cmd;
