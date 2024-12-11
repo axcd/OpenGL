@@ -3,6 +3,11 @@
 #include <jni.h>
 #include <errno.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 
@@ -204,6 +209,14 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
     }
 }
 
+void *timeout(void *time){
+	while(1){
+		sleep(2);
+		flag = flag%4;
+		flag++;
+	}
+}
+
 /**
  * This is the main entry point of a native application that is using
  * android_native_app_glue.  It runs in its own thread, with its own
@@ -239,6 +252,10 @@ void android_main(struct android_app* state) {
         // We are starting with a previous saved state; restore from it.
         engine.state = *(struct saved_state*)state->savedState;
     }
+	
+	//计时线程
+    pthread_t *thread_handle = (pthread_t *)malloc( sizeof(pthread_t));
+	pthread_create(thread_handle, NULL, timeout, NULL);
 	
     // loop waiting for stuff to do.
     while (1) {

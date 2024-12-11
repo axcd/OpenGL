@@ -278,7 +278,7 @@ int drawA(float r, float g, float b){
 	return 0;
 }
 
-//draw B
+//draw B  从assert文件夹里获取ttf
 int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	
 	FT_Library  ft;
@@ -289,85 +289,77 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	static unsigned char* bitmapBuffer = NULL;
 	
 	if(bitmapBuffer == NULL){
-	asset = AAssetManager_open(asset_manager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
+		asset = AAssetManager_open(asset_manager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
 	
-	FT_Stream stream = NULL;
-	FT_Open_Args *args = NULL;
-	SDL_RWops *rwops = NULL;
+		SDL_RWops *rwops = (SDL_RWops *)malloc(sizeof(*rwops));
+		FT_Stream stream = (FT_Stream)malloc(sizeof(*stream));
+		FT_Open_Args *args = (FT_Open_Args *)malloc(sizeof(*args));
 
-	if(rwops == NULL)
-		rwops = (SDL_RWops *)malloc(sizeof *rwops);
-	if(stream == NULL)
-		stream = (FT_Stream)malloc(sizeof(*stream));
-	if(args == NULL)
-		args = (FT_Open_Args *)malloc(sizeof(*args));
+		if(rwops == NULL || stream == NULL || args == NULL)
+			return -1;
 
-    memset(stream, 0, sizeof(*stream));
-	//memset(args, 0, sizeof(*args));
+    	memset(stream, 0, sizeof(*stream));
+		//memset(args, 0, sizeof(*args));
 
-	rwops->hidden.androidio.asset = (void*) asset;
-	rwops->size = Android_JNI_FileSize;
-    rwops->seek = Android_JNI_FileSeek;
-    rwops->read = Android_JNI_FileRead;
-    rwops->write = Android_JNI_FileWrite;
-    rwops->close = Android_JNI_FileClose;
-    rwops->type = SDL_RWOPS_JNIFILE;
+		rwops->hidden.androidio.asset = (void*) asset;
+		rwops->size = Android_JNI_FileSize;
+    	rwops->seek = Android_JNI_FileSeek;
+    	rwops->read = Android_JNI_FileRead;
+    	rwops->write = Android_JNI_FileWrite;
+    	rwops->close = Android_JNI_FileClose;
+    	rwops->type = SDL_RWOPS_JNIFILE;
 
-	position = SDL_RWtell(rwops);
+		position = SDL_RWtell(rwops);
 
-	stream->read = RWread;
-    stream->descriptor.pointer = rwops;
-    stream->pos = (unsigned long)position;
-    stream->size = (unsigned long)(SDL_RWsize(rwops) - position);
+		stream->read = RWread;
+    	stream->descriptor.pointer = rwops;
+    	stream->pos = (unsigned long)position;
+    	stream->size = (unsigned long)(SDL_RWsize(rwops) - position);
 
-	args->flags = FT_OPEN_STREAM;
-	args->stream = stream;
+		args->flags = FT_OPEN_STREAM;
+		args->stream = stream;
 	
-	if (FT_Init_FreeType(&ft)){
-		printf("ERROR::FREETYPE: Could not init FreeType Library");
-		return -1;
-	}
+		if (FT_Init_FreeType(&ft)){
+			return -1;
+		}
 	
-	FT_Face face;
+		FT_Face face;
 
-	if (FT_Open_Face(ft, args, 0, &face)){
-		printf( "ERROR::FREETYPE: Failed to load font");
-		return -1;
-	}
+		if (FT_Open_Face(ft, args, 0, &face)){
+			return -1;
+		}
 
-	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-	FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-	FT_Set_Pixel_Sizes(face, 500, 500); 
-	//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
+		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
+		FT_UInt index = FT_Get_Char_Index(face, wch[0]);
+		FT_Set_Pixel_Sizes(face, 500, 500); 
+		//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
 
-	// 字节对齐
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		// 字节对齐
+    	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
-	if (FT_Load_Char(face, index, FT_LOAD_RENDER)){
-		printf("ERROR::FREETYTPE: Failed to load Glyph");  
-		return -1;
-	}
+		if (FT_Load_Char(face, index, FT_LOAD_RENDER)){ 
+			return -1;
+		}
     
-	//加载bitmap
-	FT_Load_Glyph(face, index, FT_LOAD_DEFAULT);
-	FT_Glyph glyph;
-	FT_Get_Glyph(face->glyph, &glyph);
-	FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1);
-    FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph) glyph;
+		//加载bitmap
+		FT_Load_Glyph(face, index, FT_LOAD_DEFAULT);
+		FT_Glyph glyph;
+		FT_Get_Glyph(face->glyph, &glyph);
+		FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1);
+    	FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph) glyph;
 	
-    //This reference will make accessing the bitmap easier
-    FT_Bitmap &bitmap = bitmap_glyph->bitmap;
+    	//This reference will make accessing the bitmap easier
+    	FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-	rows = bitmap.rows;
-    width = bitmap.width;
+		rows = bitmap.rows;
+    	width = bitmap.width;
 	
-	//if(bitmapBuffer == NULL){
 		//把像素有1个字节变成4个字节
 		bitmapBuffer = (unsigned char*)calloc(bitmap.rows,bitmap.width*4);	
 		for(int i = 0; i < bitmap.rows; i++){
 			for(int j = 0; j < bitmap.width; j++){
 				if(bitmap.buffer[i*bitmap.width+j] == 0){	
-					bitmapBuffer[4*(i*bitmap.width+j)] = 255;      // red
+					bitmapBuffer[4*(i*bitmap.width+j)] = 255;     // red
 					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;    // green
 					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;    // blue
 					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;    //alpha
@@ -376,6 +368,12 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
 					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
 					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
+				}
+				if( i == j || i + j >= rows-4 && i + j <= rows ){
+					bitmapBuffer[4*(i*bitmap.width+j)] = 255;
+					bitmapBuffer[4*(i*bitmap.width+j)+1] = 255;	
+					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;			
 					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
 				}
 			}
@@ -450,12 +448,6 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	
-	//free(bitmapBuffer);
-	//bitmapBuffer=NULL;
-	
-	//AAsset_close(asset);
-	//FT_Done_Face(face);
-	//FT_Done_FreeType(ft);
 	return 0;
 }
 
