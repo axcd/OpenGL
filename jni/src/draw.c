@@ -331,7 +331,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 
 		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 		FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-		FT_Set_Pixel_Sizes(face, 500, 500); 
+		FT_Set_Pixel_Sizes(face, 2000, 2000); 
 		//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
 
 		// 字节对齐
@@ -370,9 +370,15 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
 					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
 				}
-				if( i == j || i + j >= rows-4 && i + j <= rows ){
+				if( (j > i*width/rows-2 && j < i*width/rows+2) || (i*width/rows + j > width-4 && i*width/rows + j < width) ){
 					bitmapBuffer[4*(i*bitmap.width+j)] = 255;
 					bitmapBuffer[4*(i*bitmap.width+j)+1] = 255;	
+					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;			
+					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
+				}
+				if( i > 5 && i < 150 && j > 4 && j < 160 ){
+					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
+					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
 					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;			
 					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
 				}
@@ -395,6 +401,8 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
 	//glColor4f(r, g, b, 0.0);
 	//glColor4f(1.0, 0.0, 0.0, 1.0);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	
 	GLuint texture;
     glGenTextures(1, &texture);
@@ -419,7 +427,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
                 bitmapBuffer
     );
 
-	GLfloat vx = 0.5f, vy = 0.5f;
+	GLfloat vx = 0.8f, vy = 0.8f;
 	static GLfloat vertices[] = {
 								   -vx, -vy,
 									vx, -vy,
@@ -432,21 +440,21 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 						  	    0,0,      
 								1,0, 
 								};
-		
+	
 	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
-	glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
+	//glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
 	
 	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
+	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
 	
 	glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
-	rotation += 0.5;
+	//rotation += 0.5;
 	
 	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	//glDisableClientState(GL_VERTEX_ARRAY);
+	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	
 	return 0;
 }

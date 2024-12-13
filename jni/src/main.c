@@ -179,6 +179,7 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             if (engine->app->window != NULL) {
                 engine_init_display(engine);
                 engine_draw_frame(engine);
+				engine->animating = 1;   //开始自动播放
             }
             break;
         case APP_CMD_TERM_WINDOW:
@@ -209,9 +210,10 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
     }
 }
 
+//计时
 void *timeout(void *time){
 	while(1){
-		sleep(2);
+		sleep(10);
 		flag = flag%4;
 		flag++;
 	}
