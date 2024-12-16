@@ -20,6 +20,9 @@
 #include "log.h"
 #include "drawFont.c"
 
+#include <sys/time.h>
+int alive = 1;
+
 #define SDL_RWOPS_JNIFILE  3U
 
 AAsset *asset;
@@ -55,6 +58,16 @@ struct engine {
     struct saved_state state;
 };
 
+
+static long getTime()
+{
+    struct timeval  now;
+
+    gettimeofday(&now, NULL);
+    return (long)(now.tv_sec*1000 + now.tv_usec/1000);
+}
+
+long c_time = getTime();
 /**
  *  draw XY
  */
@@ -138,7 +151,7 @@ static void draw(){
 	
 	glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
-	rotation += 0.5;
+	if(alive)rotation += 0.5;
 	
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);   
@@ -331,7 +344,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 
 		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 		FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-		FT_Set_Pixel_Sizes(face, 2000, 2000); 
+		FT_Set_Pixel_Sizes(face, 480, 640); 
 		//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
 
 		// 字节对齐
@@ -351,36 +364,30 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
     	//This reference will make accessing the bitmap easier
     	FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-		rows = bitmap.rows;
-    	width = bitmap.width;
+		rows = bitmap.rows+200;
+    	width = bitmap.width+200;
 	
 		//把像素有1个字节变成4个字节
-		bitmapBuffer = (unsigned char*)calloc(bitmap.rows,bitmap.width*4);	
+		bitmapBuffer = (unsigned char*)calloc(rows*width, 4);	
 		for(int i = 0; i < bitmap.rows; i++){
 			for(int j = 0; j < bitmap.width; j++){
 				if(bitmap.buffer[i*bitmap.width+j] == 0){	
-					bitmapBuffer[4*(i*bitmap.width+j)] = 255;     // red
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;    // green
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;    // blue
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;    //alpha
+					bitmapBuffer[4*((i+100)*width+j+100)] = 255;     // red
+					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;     // green
+					bitmapBuffer[4*((i+100)*width+j+100)+2] = 0;     // blue
+					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;    //alpha
 			
 				}else{		
-					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
+					bitmapBuffer[4*((i+100)*width+j+100)] = 0;     // red
+					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;     // green
+					bitmapBuffer[4*((i+100)*width+j+100)+2] = 0;     // blue
+					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;    //alpha
 				}
-				if( (j > i*width/rows-2 && j < i*width/rows+2) || (i*width/rows + j > width-4 && i*width/rows + j < width) ){
-					bitmapBuffer[4*(i*bitmap.width+j)] = 255;
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 255;	
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;			
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
-				}
-				if( i > 5 && i < 150 && j > 4 && j < 160 ){
-					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;			
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
+				if( (i+100) > 5 && (i+100) < 150 && (j+100) > 4 && (j+100) < 160 ){
+					bitmapBuffer[4*((i+100)*width+j+100)] = 0;
+					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;	
+					bitmapBuffer[4*((i+100)*width+j+100)+2] = 255;			
+					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;
 				}
 			}
 		}
@@ -398,7 +405,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	static GLfloat rotation=0.0;
 			
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
-	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
+	//glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
 	//glColor4f(r, g, b, 0.0);
 	//glColor4f(1.0, 0.0, 0.0, 1.0);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -427,7 +434,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
                 bitmapBuffer
     );
 
-	GLfloat vx = 0.8f, vy = 0.8f;
+	GLfloat vx = 1.0f, vy = 1.0f;
 	static GLfloat vertices[] = {
 								   -vx, -vy,
 									vx, -vy,
@@ -437,9 +444,8 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
   
 	const GLshort square[] = { 0,1,
 							   1,1,
-						  	    0,0,      
-								1,0, 
-								};
+						  	   0,0,      
+							   1,0, };
 	
 	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
 	//glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
@@ -453,8 +459,8 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	
 	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);
-	//glDisableClientState(GL_VERTEX_ARRAY);
-	//glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	
 	return 0;
 }
@@ -529,7 +535,13 @@ void drawTexture(AAssetManager* mgr, char* filename){
 	
 	glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
-	rotation += 0.5;
+	//rotation += 0.5;
+	
+	long ntime = getTime();
+	if( ntime - c_time > 10 ){
+		c_time = ntime;
+		rotation += 0.5;
+	}
 	
 	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);

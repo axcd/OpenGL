@@ -3,11 +3,6 @@
 #include <jni.h>
 #include <errno.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <unistd.h>
-
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 
@@ -155,7 +150,8 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
         engine->state.y = AMotionEvent_getY(event, 0);
 		if(AMotionEvent_getAction(event) == AMOTION_EVENT_ACTION_UP)
 		{
-			flag = flag%4; flag++;
+			//flag = flag%4; flag++;
+			alive = !alive;
 		}
         return 1;
     }
@@ -211,11 +207,18 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 }
 
 //计时
-void *timeout(void *time){
+void *timeout(void *timer){
+	
+	long c_time = getTime();
 	while(1){
-		sleep(10);
-		flag = flag%4;
-		flag++;
+		long current_time = getTime();
+		long t = current_time - c_time;
+	
+		if( t > 3000 ){
+			c_time = current_time;
+			flag = flag%4;
+			flag++;
+		}
 	}
 }
 
