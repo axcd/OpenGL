@@ -21,9 +21,11 @@
 #include "drawFont.c"
 
 #include <sys/time.h>
-int alive = 1;
+int alive = 0;
 
 #define SDL_RWOPS_JNIFILE  3U
+#define N 200
+#define M 40
 
 AAsset *asset;
 Sint64 position;
@@ -117,27 +119,71 @@ static void drawXY(){
 	glDisableClientState(GL_VERTEX_ARRAY);   
 }
 
+typedef struct star star;
+
+struct star{
+	int isInit=0;
+	GLfloat x;
+	GLfloat y;
+	GLfloat x1;
+	GLfloat y1;
+	GLfloat starLayout[6];
+	void (* init)(star *ps);
+	void (* move)(star *ps);
+	void (* layout)(star *ps);
+} ;
+
+void initStar(star *ps){
+	ps->x = 2.0*rand()/RAND_MAX-1;
+	ps->y = 2.0*rand()/RAND_MAX-1;
+	ps->x1 = 0.006*rand()/RAND_MAX-0.003;
+	ps->y1 = 0.006*rand()/RAND_MAX-0.003;
+	ps->isInit = 1;
+}
+
+void moveStar(star *ps){
+	ps->x += ps->x1;
+	ps->y += ps->y1;
+	if(ps->x1>0 && ps->x>1.5) ps->x = -1.5;
+	if(ps->x1<0 && ps->x<-1.5) ps->x = 1.5;
+	if(ps->y1>0 && ps->y>1.5) ps->y = -1.5;
+	if(ps->y1<0 && ps->y<-1.5) ps->y = 1.5;
+	ps->layout(ps);
+}
+
+void setlayout(star *ps){
+	ps->starLayout[0] = ps->x;
+	ps->starLayout[1] = ps->y+0.007;
+	ps->starLayout[2] = ps->x-0.007;
+	ps->starLayout[3] = ps->y;
+	ps->starLayout[4] = ps->x+0.007;
+	ps->starLayout[5] = ps->y;
+}
+
 //绘制三角形
 static void draw(){
 	
 	static GLfloat rotation=0.0;
+	static GLfloat i=0.1;
+	static GLfloat i0=0.005;
+	i += i0;
+	if ( i>1.0 ) i = -1.0;
+	
 	GLubyte colorArray[] = {
-		255, 0, 0, 0,
-		0, 255, 0, 0,
-		0, 0, 255, 0,
+		255, 255, 255, 0,
+		255, 255, 255, 0,
+		255, 255, 255, 0,
 		0, 255, 255, 0,
 		255, 0, 255, 0,
 		255, 255, 0, 0
 	};
 	
 	GLfloat flayout[] = {   
-	    -0.6, -0.6,
-         0.1, -0.6,
-        -0.2,  0.1,
-         0.3, -0.3,
-         0.1,  0.2,
-        -0.6,  0.5
+	    -0.2+i, -0.1,
+        -0.2+i, -0.12,
+        -0.15+i, -0.11,
 	};
+	
 	glLoadIdentity();
 
 	glLineWidth(10);
@@ -150,8 +196,30 @@ static void draw(){
 	glColorPointer(4, GL_UNSIGNED_BYTE, 0, colorArray);
 	
 	glRotatef(rotation,0.0,0.0,1.0);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	if(alive)rotation += 0.5;
+	
+	static star stars[N];
+		
+	if(stars[0].isInit==0){
+		for(int i=0; i<N; i++){
+			stars[i].init = initStar;
+			stars[i].layout = setlayout;
+			stars[i].move = moveStar;
+			stars[i].init(&stars[i]);
+				
+			if(i>M){
+				stars[i].x1 = 0;
+				stars[i].y1 = 0;
+			}
+		}
+	}
+		
+	for(int i=0; i<N; i++){
+		stars[i].move(&stars[i]);
+		glVertexPointer(2, GL_FLOAT, 0, stars[i].starLayout);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+	}
 	
 	glDisableClientState(GL_COLOR_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);   
@@ -172,7 +240,7 @@ int drawA(float r, float g, float b){
 
 	FT_Face face;
 	
-	char *file = "/storage/emulated/0/AppProjects/gles/assets/fonts/GB2312.ttf";
+	char *file = "/storage/emulated/0/AppProjects/gles/assets/GB2312.ttf";
 
 	if (FT_New_Face(ft, file, 0, &face)){
 		printf( "ERROR::FREETYPE: Failed to load font");
@@ -202,24 +270,47 @@ int drawA(float r, float g, float b){
     //This reference will make accessing the bitmap easier
     FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-	static unsigned char* bitmapBuffer = NULL;
+	static unsigned int rows = bitmap.rows;
+	static unsigned int width = bitmap.width;
 	
-	if(bitmapBuffer == NULL){
+	typedef struct{
+		unsigned char buffer[1080][2400][4];
+	} ps;
+	
+	static ps *pixs = NULL;
+	
+	if(pixs == NULL){
 		//把像素有1个字节变成4个字节
-		bitmapBuffer = (unsigned char*)calloc(bitmap.rows,bitmap.width*4);	
+		pixs = (ps *)calloc(1, sizeof(ps));
+		memset(pixs, 255, sizeof(*pixs));
 		for(int i = 0; i < bitmap.rows; i++){
 			for(int j = 0; j < bitmap.width; j++){
-				if(bitmap.buffer[i*bitmap.width+j] == 0){	
-					bitmapBuffer[4*(i*bitmap.width+j)] = 255;      // red
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 225;    // green
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 255;    // blue
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 0;    //alpha
-			
-				}else{		
-					bitmapBuffer[4*(i*bitmap.width+j)] = 0;
-					bitmapBuffer[4*(i*bitmap.width+j)+1] = 0;	
-					bitmapBuffer[4*(i*bitmap.width+j)+2] = 0;			
-					bitmapBuffer[4*(i*bitmap.width+j)+3] = 255;
+				if(bitmap.buffer[i*bitmap.width+j] == 0){
+					pixs->buffer[i/4+50][j+200][0] = 255;
+					pixs->buffer[i/4+50][j+200][1] = 0;
+					pixs->buffer[i/4+50][j+200][2] = 0;
+					pixs->buffer[i/4+50][j+200][3] = 255;
+				}else{
+					pixs->buffer[i/4+50][j+200][0] = 0;
+					pixs->buffer[i/4+50][j+200][1] = 0;
+					pixs->buffer[i/4+50][j+200][2] = 0;
+					pixs->buffer[i/4+50][j+200][3] = 255;
+				}
+			}
+		}
+		
+		for(int i = 0; i < bitmap.rows; i++){
+			for(int j = 0; j < bitmap.width; j++){
+				if(bitmap.buffer[i*bitmap.width+j] == 0){
+					pixs->buffer[i/4+30][j+bitmap.width+220][0] = 255;
+					pixs->buffer[i/4+30][j+bitmap.width+220][1] = 0;
+					pixs->buffer[i/4+30][j+bitmap.width+220][2] = 0;
+					pixs->buffer[i/4+30][j+bitmap.width+220][3] = 255;
+				}else{
+					pixs->buffer[i/4+30][j+bitmap.width+220][0] = 0;
+					pixs->buffer[i/4+30][j+bitmap.width+220][1] = 0;
+					pixs->buffer[i/4+30][j+bitmap.width+220][2] = 0;
+					pixs->buffer[i/4+30][j+bitmap.width+220][3] = 255;
 				}
 			}
 		}
@@ -228,8 +319,8 @@ int drawA(float r, float g, float b){
 	static GLfloat rotation=0.0;
 			
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
-	glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
-	glColor4f(r, g, b, 0.0);
+	//glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
+	//glColor4f(r, g, b, 0.0);
 	//glColor4f(1.0, 0.0, 0.0, 1.0);
 	
 	GLuint texture;
@@ -247,15 +338,15 @@ int drawA(float r, float g, float b){
                 GL_TEXTURE_2D,
                 0,
                 GL_RGBA,
-                bitmap.width,
-                bitmap.rows,
+                2400,
+                1080,
                 0,
 				GL_RGBA,  
                 GL_UNSIGNED_BYTE,
-                bitmapBuffer
+                pixs->buffer
     );
 
-	GLfloat vx = 0.5f, vy = 0.5f;
+	GLfloat vx = 1.0f, vy = 1.0f;
 	static GLfloat vertices[] = {
 								   -vx, -vy,
 									vx, -vy,
@@ -275,9 +366,9 @@ int drawA(float r, float g, float b){
 	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
 	
-	glRotatef(rotation,0.0,0.0,1.0);
+	//glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
-	rotation += 0.5;
+	//rotation += 0.5;
 	
 	glDeleteTextures(1, &texture);
 	glDisable(GL_TEXTURE_2D);
@@ -295,14 +386,14 @@ int drawA(float r, float g, float b){
 int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	
 	FT_Library  ft;
-	wchar_t *wch = L"毛";
+	wchar_t *wch = L"玉";
 	//wch = L"A";
 	static unsigned int rows;
     static unsigned int width;
 	static unsigned char* bitmapBuffer = NULL;
 	
 	if(bitmapBuffer == NULL){
-		asset = AAssetManager_open(asset_manager, "fonts/GB2312.ttf", AASSET_MODE_UNKNOWN);
+		asset = AAssetManager_open(asset_manager, "GB2312.ttf", AASSET_MODE_UNKNOWN);
 	
 		SDL_RWops *rwops = (SDL_RWops *)malloc(sizeof(*rwops));
 		FT_Stream stream = (FT_Stream)malloc(sizeof(*stream));
@@ -364,32 +455,31 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
     	//This reference will make accessing the bitmap easier
     	FT_Bitmap &bitmap = bitmap_glyph->bitmap;
 	
-		rows = bitmap.rows+200;
-    	width = bitmap.width+200;
-	
+		rows = 2400; // bitmap.rows;
+    	width = 1080; //bitmap.width;
+		
 		//把像素有1个字节变成4个字节
-		bitmapBuffer = (unsigned char*)calloc(rows*width, 4);	
-		for(int i = 0; i < bitmap.rows; i++){
-			for(int j = 0; j < bitmap.width; j++){
-				if(bitmap.buffer[i*bitmap.width+j] == 0){	
-					bitmapBuffer[4*((i+100)*width+j+100)] = 255;     // red
-					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;     // green
-					bitmapBuffer[4*((i+100)*width+j+100)+2] = 0;     // blue
-					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;    //alpha
-			
-				}else{		
-					bitmapBuffer[4*((i+100)*width+j+100)] = 0;     // red
-					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;     // green
-					bitmapBuffer[4*((i+100)*width+j+100)+2] = 0;     // blue
-					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;    //alpha
-				}
-				if( (i+100) > 5 && (i+100) < 150 && (j+100) > 4 && (j+100) < 160 ){
-					bitmapBuffer[4*((i+100)*width+j+100)] = 0;
-					bitmapBuffer[4*((i+100)*width+j+100)+1] = 0;	
-					bitmapBuffer[4*((i+100)*width+j+100)+2] = 255;			
-					bitmapBuffer[4*((i+100)*width+j+100)+3] = 255;
+		bitmapBuffer = (unsigned char*)calloc(1080*2400, 4);
+		unsigned char* p = bitmapBuffer;
+		
+		p += width*4*50;
+		for(int i = 0; i < bitmap.rows; i+=4){
+			p += 4*50;
+			for(int j = 0; j < bitmap.width; j+=5){
+				if(bitmap.buffer[i*bitmap.width+j] == 0){
+					*p++ = 255;
+					*p++ = 0;
+					*p++ = 0;
+					*p++ = 0;
+				}else{
+					*p++ = 0;
+					*p++ = 0;
+					*p++ = 0;
+					*p++ = 0;
 				}
 			}
+			//if(bitmap.width%3!=3) p -= 4;
+			p += 4*(1080-50-bitmap.width/5-1);
 		}
 		
 		free(rwops);
@@ -408,6 +498,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	//glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
 	//glColor4f(r, g, b, 0.0);
 	//glColor4f(1.0, 0.0, 0.0, 1.0);
+	
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	
@@ -421,13 +512,14 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	
 	glEnable(GL_TEXTURE_2D); 
+	//glEnable(GL_BLEND);
 	
     glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
                 GL_RGBA,
-                width,
-                rows,
+                1080,
+                2400,
                 0,
 				GL_RGBA,  
                 GL_UNSIGNED_BYTE,
@@ -453,7 +545,7 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
 	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
 	
-	glRotatef(rotation,0.0,0.0,1.0);
+	glRotatef(rotation,0.0,0.0,0.0);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
 	//rotation += 0.5;
 	
@@ -540,7 +632,7 @@ void drawTexture(AAssetManager* mgr, char* filename){
 	long ntime = getTime();
 	if( ntime - c_time > 10 ){
 		c_time = ntime;
-		rotation += 0.5;
+		rotation += 1.0;
 	}
 	
 	glDeleteTextures(1, &texture);
@@ -549,3 +641,7 @@ void drawTexture(AAssetManager* mgr, char* filename){
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
+
+void drawstar(){
+	
+}

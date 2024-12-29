@@ -17,7 +17,23 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-int flag = 1;
+int flag = 3;
+
+//计时
+void *timeout(void *timer){
+	
+	long c_time = getTime();
+	while(1){
+		long current_time = getTime();
+		long t = current_time - c_time;
+	
+		if( t > 3000 ){
+			c_time = current_time;
+			flag = flag%4;
+			flag++; flag = 3;
+		}
+	}
+}
 
 /**
  * Initialize an EGL context for the current display.
@@ -102,7 +118,7 @@ static void engine_draw_frame(struct engine* engine) {
     // Just fill the screen with a color.
     glClearColor(((float)engine->state.x)/engine->width, engine->state.angle,
             ((float)engine->state.y)/engine->height, 1);
-	//glClearColor(255,255,255,255);
+	glClearColor( 0,0,0,0);
     glClear(GL_COLOR_BUFFER_BIT);
 
 	if(flag==1)
@@ -204,22 +220,6 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             engine_draw_frame(engine);
             break;
     }
-}
-
-//计时
-void *timeout(void *timer){
-	
-	long c_time = getTime();
-	while(1){
-		long current_time = getTime();
-		long t = current_time - c_time;
-	
-		if( t > 3000 ){
-			c_time = current_time;
-			flag = flag%4;
-			flag++;
-		}
-	}
 }
 
 /**

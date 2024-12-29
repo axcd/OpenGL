@@ -18,7 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_CPP_EXTENSION := .c .cpp
 
-LOCAL_MODULE    := native-activity
+LOCAL_MODULE    := main
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)
 
