@@ -23,12 +23,8 @@
 #include <sys/time.h>
 int alive = 0;
 
-#define SDL_RWOPS_JNIFILE  3U
 #define N 200
 #define M 40
-
-AAsset *asset;
-Sint64 position;
 
 /**
  * Our saved state data.
@@ -197,7 +193,7 @@ static void draw(){
 	
 	glRotatef(rotation,0.0,0.0,1.0);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
-	if(alive)rotation += 0.5;
+	if(alive)rotation += 0.7;
 	
 	static star stars[N];
 		
@@ -214,7 +210,7 @@ static void draw(){
 			}
 		}
 	}
-		
+	
 	for(int i=0; i<N; i++){
 		stars[i].move(&stars[i]);
 		glVertexPointer(2, GL_FLOAT, 0, stars[i].starLayout);
@@ -244,19 +240,21 @@ int drawA(float r, float g, float b){
 
 	if (FT_New_Face(ft, file, 0, &face)){
 		printf( "ERROR::FREETYPE: Failed to load font");
+		mlog("1", 1, NULL);
 		return -1;
 	}
 	
 	FT_Select_Charmap(face, FT_ENCODING_UNICODE);
 	FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-	//FT_Set_Pixel_Sizes(face, 500, 500); 
-	FT_Set_Char_Size(face, 0, 64*64, 300, 300);
+	FT_Set_Pixel_Sizes(face, 500, 500); 
+	//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
 	
 	// 字节对齐
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	
 	if (FT_Load_Char(face, index, FT_LOAD_RENDER)){
-		printf("ERROR::FREETYTPE: Failed to load Glyph");  
+		printf("ERROR::FREETYTPE: Failed to load Glyph"); 
+		mlog("2", 1, NULL);
 		return -1;
 	}
     
@@ -282,35 +280,19 @@ int drawA(float r, float g, float b){
 	if(pixs == NULL){
 		//把像素有1个字节变成4个字节
 		pixs = (ps *)calloc(1, sizeof(ps));
-		memset(pixs, 255, sizeof(*pixs));
+		memset(pixs, 155, sizeof(ps));
 		for(int i = 0; i < bitmap.rows; i++){
 			for(int j = 0; j < bitmap.width; j++){
 				if(bitmap.buffer[i*bitmap.width+j] == 0){
-					pixs->buffer[i/4+50][j+200][0] = 255;
-					pixs->buffer[i/4+50][j+200][1] = 0;
-					pixs->buffer[i/4+50][j+200][2] = 0;
-					pixs->buffer[i/4+50][j+200][3] = 255;
+					pixs->buffer[i][j][0] = 255;
+					pixs->buffer[i][j][1] = 0;
+					pixs->buffer[i][j][2] = 0;
+					pixs->buffer[i][j][3] = 255;
 				}else{
-					pixs->buffer[i/4+50][j+200][0] = 0;
-					pixs->buffer[i/4+50][j+200][1] = 0;
-					pixs->buffer[i/4+50][j+200][2] = 0;
-					pixs->buffer[i/4+50][j+200][3] = 255;
-				}
-			}
-		}
-		
-		for(int i = 0; i < bitmap.rows; i++){
-			for(int j = 0; j < bitmap.width; j++){
-				if(bitmap.buffer[i*bitmap.width+j] == 0){
-					pixs->buffer[i/4+30][j+bitmap.width+220][0] = 255;
-					pixs->buffer[i/4+30][j+bitmap.width+220][1] = 0;
-					pixs->buffer[i/4+30][j+bitmap.width+220][2] = 0;
-					pixs->buffer[i/4+30][j+bitmap.width+220][3] = 255;
-				}else{
-					pixs->buffer[i/4+30][j+bitmap.width+220][0] = 0;
-					pixs->buffer[i/4+30][j+bitmap.width+220][1] = 0;
-					pixs->buffer[i/4+30][j+bitmap.width+220][2] = 0;
-					pixs->buffer[i/4+30][j+bitmap.width+220][3] = 255;
+					pixs->buffer[i][j][0] = 0;
+					pixs->buffer[i][j][1] = 0;
+					pixs->buffer[i][j][2] = 0;
+					pixs->buffer[i][j][3] = 255;
 				}
 			}
 		}
@@ -382,180 +364,6 @@ int drawA(float r, float g, float b){
 	return 0;
 }
 
-//draw B  从assert文件夹里获取ttf
-int drawB(float r, float g, float b, AAssetManager* asset_manager){
-	
-	FT_Library  ft;
-	wchar_t *wch = L"玉";
-	//wch = L"A";
-	static unsigned int rows;
-    static unsigned int width;
-	static unsigned char* bitmapBuffer = NULL;
-	
-	if(bitmapBuffer == NULL){
-		asset = AAssetManager_open(asset_manager, "GB2312.ttf", AASSET_MODE_UNKNOWN);
-	
-		SDL_RWops *rwops = (SDL_RWops *)malloc(sizeof(*rwops));
-		FT_Stream stream = (FT_Stream)malloc(sizeof(*stream));
-		FT_Open_Args *args = (FT_Open_Args *)malloc(sizeof(*args));
-
-		if(rwops == NULL || stream == NULL || args == NULL)
-			return -1;
-
-    	memset(stream, 0, sizeof(*stream));
-		//memset(args, 0, sizeof(*args));
-
-		rwops->hidden.androidio.asset = (void*) asset;
-		rwops->size = Android_JNI_FileSize;
-    	rwops->seek = Android_JNI_FileSeek;
-    	rwops->read = Android_JNI_FileRead;
-    	rwops->write = Android_JNI_FileWrite;
-    	rwops->close = Android_JNI_FileClose;
-    	rwops->type = SDL_RWOPS_JNIFILE;
-
-		position = SDL_RWtell(rwops);
-
-		stream->read = RWread;
-    	stream->descriptor.pointer = rwops;
-    	stream->pos = (unsigned long)position;
-    	stream->size = (unsigned long)(SDL_RWsize(rwops) - position);
-
-		args->flags = FT_OPEN_STREAM;
-		args->stream = stream;
-	
-		if (FT_Init_FreeType(&ft)){
-			return -1;
-		}
-	
-		FT_Face face;
-
-		if (FT_Open_Face(ft, args, 0, &face)){
-			return -1;
-		}
-
-		FT_Select_Charmap(face, FT_ENCODING_UNICODE);
-		FT_UInt index = FT_Get_Char_Index(face, wch[0]);
-		FT_Set_Pixel_Sizes(face, 480, 640); 
-		//FT_Set_Char_Size(face, 0, 64*64, 300, 300);
-
-		// 字节对齐
-    	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	
-		if (FT_Load_Char(face, index, FT_LOAD_RENDER)){ 
-			return -1;
-		}
-    
-		//加载bitmap
-		FT_Load_Glyph(face, index, FT_LOAD_DEFAULT);
-		FT_Glyph glyph;
-		FT_Get_Glyph(face->glyph, &glyph);
-		FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1);
-    	FT_BitmapGlyph bitmap_glyph = (FT_BitmapGlyph) glyph;
-	
-    	//This reference will make accessing the bitmap easier
-    	FT_Bitmap &bitmap = bitmap_glyph->bitmap;
-	
-		rows = 2400; // bitmap.rows;
-    	width = 1080; //bitmap.width;
-		
-		//把像素有1个字节变成4个字节
-		bitmapBuffer = (unsigned char*)calloc(1080*2400, 4);
-		unsigned char* p = bitmapBuffer;
-		
-		p += width*4*50;
-		for(int i = 0; i < bitmap.rows; i+=4){
-			p += 4*50;
-			for(int j = 0; j < bitmap.width; j+=5){
-				if(bitmap.buffer[i*bitmap.width+j] == 0){
-					*p++ = 255;
-					*p++ = 0;
-					*p++ = 0;
-					*p++ = 0;
-				}else{
-					*p++ = 0;
-					*p++ = 0;
-					*p++ = 0;
-					*p++ = 0;
-				}
-			}
-			//if(bitmap.width%3!=3) p -= 4;
-			p += 4*(1080-50-bitmap.width/5-1);
-		}
-		
-		free(rwops);
-		rwops = NULL;
-		free(stream);
-		stream = NULL;
-		free(args);
-		args = NULL;
-		FT_Done_Face(face);
-		FT_Done_FreeType(ft);
-	}
-	
-	static GLfloat rotation=0.0;
-			
-	glLoadIdentity();//清空当前矩阵，还原默认矩阻 
-	//glOrthof(-1.0f,1.0f,-1.5f,1.5f,-1.5f,1.5f);//正交模式下可视区域
-	//glColor4f(r, g, b, 0.0);
-	//glColor4f(1.0, 0.0, 0.0, 1.0);
-	
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	
-	GLuint texture;
-    glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);   
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	
-	glEnable(GL_TEXTURE_2D); 
-	//glEnable(GL_BLEND);
-	
-    glTexImage2D(
-                GL_TEXTURE_2D,
-                0,
-                GL_RGBA,
-                1080,
-                2400,
-                0,
-				GL_RGBA,  
-                GL_UNSIGNED_BYTE,
-                bitmapBuffer
-    );
-
-	GLfloat vx = 1.0f, vy = 1.0f;
-	static GLfloat vertices[] = {
-								   -vx, -vy,
-									vx, -vy,
-									-vx,  vy,
-									vx,   vy,
-								 };    
-  
-	const GLshort square[] = { 0,1,
-							   1,1,
-						  	   0,0,      
-							   1,0, };
-	
-	glVertexPointer(2, GL_FLOAT, 0, vertices); //确定使用的顶点坐标数列的位置和尺寸
-	//glEnableClientState(GL_VERTEX_ARRAY);  //启动独立的客户端功能，告诉OpenGL将会使用一个由glVertexPointer定义的定点数组    
-	
-	glTexCoordPointer(2, GL_SHORT, 0, square);  //纹理坐标.参数含义跟以上的方法大相迳庭
-	//glEnableClientState(GL_TEXTURE_COORD_ARRAY);  
-	
-	glRotatef(rotation,0.0,0.0,0.0);
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //进行连续不间断的渲染,在渲染缓冲区有了一个准备好的要渲染的图像
-	//rotation += 0.5;
-	
-	glDeleteTextures(1, &texture);
-	glDisable(GL_TEXTURE_2D);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	
-	return 0;
-}
 
 //获取Texture2D
 void getImageTexture2D(AAssetManager* mgr, char* filename, int *width, int *height, int *nrChannels){

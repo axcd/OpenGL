@@ -1045,7 +1045,7 @@
     glyph_index = (FT_UInt)char_code;
     if ( face->charmap )
       glyph_index = FT_Get_Char_Index( face, char_code );
-
+mlog("m", 1, NULL);
     return FT_Load_Glyph( face, glyph_index, load_flags );
   }
 
