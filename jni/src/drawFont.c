@@ -160,6 +160,15 @@ int doneCharBuffer( CharBuffer *bch ){
 	return 0;
 }
 
+int lenWch(wchar_t *wch){
+	int i = 0;
+	while(memcmp(wch, "\0", 1)!=0){
+		wch++;
+		i++;
+	}
+	return i;
+}
+
 int getFace(AAssetManager* asset_manager){
 	
 	asset = AAssetManager_open(asset_manager, "GB2312.ttf", AASSET_MODE_UNKNOWN);
@@ -279,12 +288,12 @@ unsigned char * fontTex(unsigned char *src, unsigned int srows,unsigned int swid
 	return dest;
 }
 
-//draw B  从assert文件夹里获取ttf
-int drawB(float r, float g, float b, AAssetManager* asset_manager){
+static unsigned int rows;
+static unsigned int width;
+static unsigned char* bitmapBuffer = NULL;
 	
-	static unsigned int rows;
-    static unsigned int width;
-	static unsigned char* bitmapBuffer = NULL;
+//draw B  从assert文件夹里获取ttf
+int drawB0(AAssetManager* asset_manager){
 	
 	if(bitmapBuffer == NULL){
 		
@@ -296,9 +305,10 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 		bitmapBuffer = (unsigned char*)calloc(1080*2400, 4);
 		memset(bitmapBuffer, 205, 1080*2400*4);
 	
-		wchar_t *wch = L"今天天气不错啊";
+		wchar_t *wch = L"今天天气不错好好休息";
+		int n = lenWch(wch);
 		
-		for(int k=0; k<7; k++){
+		for(int k=0; k<n; k++){
 			unsigned char* p = NULL;
 			unsigned char* p1 = bitmapBuffer;
 			CharBuffer *bc = charBuffer(asset_manager, wch, k);
@@ -323,12 +333,16 @@ int drawB(float r, float g, float b, AAssetManager* asset_manager){
 				}
 				p1 += 4*width;
 			}
+			doneCharBuffer(bc);
 		}
-		
 		FT_Done_Face(face);
 		FT_Done_FreeType(ft);
 	}
 	
+	return 0;
+}
+
+int drawB(float r, float g, float b, AAssetManager* asset_manager){
 	static GLfloat rotation=0.0;
 			
 	glLoadIdentity();//清空当前矩阵，还原默认矩阻 

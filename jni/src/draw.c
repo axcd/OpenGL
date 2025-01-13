@@ -21,7 +21,7 @@
 #include "drawFont.c"
 
 #include <sys/time.h>
-int alive = 0;
+int alive = 1;
 
 #define N 200
 #define M 40

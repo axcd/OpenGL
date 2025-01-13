@@ -17,20 +17,24 @@
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
-int flag = 3;
+int flag = 2;
 
 //计时
-void *timeout(void *timer){
+void *timeout(void *state){
 	
 	long c_time = getTime();
 	while(1){
 		long current_time = getTime();
 		long t = current_time - c_time;
 	
-		if( t > 3000 ){
+		if( t > 0 ){
 			c_time = current_time;
-			flag = flag%4;
-			flag++; flag = 3;
+			//flag = flag%4;
+			//flag++; 
+			drawB0(((android_app *)state)->activity->assetManager);
+			if(bitmapBuffer != NULL){
+				flag = 3;
+			}
 		}
 	}
 }
@@ -260,7 +264,7 @@ void android_main(struct android_app* state) {
 	
 	//计时线程
     pthread_t *thread_handle = (pthread_t *)malloc( sizeof(pthread_t));
-	pthread_create(thread_handle, NULL, timeout, NULL);
+	pthread_create(thread_handle, NULL, timeout, (void *)state);
 	
     // loop waiting for stuff to do.
     while (1) {
